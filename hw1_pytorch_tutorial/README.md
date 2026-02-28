@@ -1,5 +1,6 @@
 # Homework 1: Pytorch tutorial
-**Due Date: 26.02.26 23:59 CET**
+**Due Date: 05.03.26 23:59 CET**
+**Needs to be solved individually. Gradescope checks for duplicate code.**
 
 ## Setup (uv) + Jupyter
 
@@ -79,11 +80,9 @@ Please **do not change function names or signatures**, since the autograder impo
 
 To submit your work, you must be enrolled in the course on Gradescope.
 
-1.  Go to [gradescope.com](https://www.gradescope.com/).
-2.  If you have an account, **Log In**. If not, click **Sign Up**, select **Student**, and use your institutional email.
-3.  On your dashboard, look for the bottom right corner (or the "Your Courses" header) and click **Enroll in Course**.
-4.  Enter the Entry Code: `B55K6N`
-5.  Click **Enroll**. You should now see the course listed on your dashboard.
+You should've received an email with gradescope details. Please follow the instructions in the email.
+
+If you didn't get an email for gradescope (e.g. you're late enrolled to this course) write Alexey an email: agavryushin@ethz.ch
 
 ### 2. Assignment Submission
 

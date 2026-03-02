@@ -9,16 +9,18 @@ def get_lemniscate_keypoint(t, a=0.2):
         The formula is: y = a * cos(t) / (1 + sin(t)^2)
                         z = a * cos(t) * sin(t) / (1 + sin(t)^2)
     For interest, you can learn about Lemniscate of Bernoulli on wikipedia: https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli
-    
+
     Args:
         t (float or np.ndarray): Time scales from 0 to 2π to generate keypoints.
         a (float): Scaling factor for the size of the lemniscate.
-        
+
     Returns:
         y (float or np.ndarray): y coordinates of the keypoint on the lemniscate.
         z (float or np.ndarray): z coordinates of the keypoint on the lemniscate.
     """
-    raise NotImplementedError()
+    y = a * np.cos(t) / (1 + np.sin(t)**2)
+    z = a * np.cos(t) * np.sin(t) / (1 + np.sin(t)**2)
+    return y, z
 
 def build_keypoints(count=16, width=0.25, x_offset=0.3, z_offset=0.25):
     """TODO:
@@ -38,14 +40,27 @@ def build_keypoints(count=16, width=0.25, x_offset=0.3, z_offset=0.25):
     Returns:
         np.ndarray: Array of shape (count, 3) containing the generated keypoints.
     """
-    raise NotImplementedError()
+    # Generate 'count' linearly spaced time values between 0 and 2π (exclusive)
+    t = np.linspace(0, 2 * np.pi, count, endpoint=False)
+
+    # Compute (y, z) coordinates using get_lemniscate_keypoint
+    y, z = get_lemniscate_keypoint(t, a=width)
+
+    # Create 3D keypoints with fixed x_offset and z_offset
+    keypoints = np.column_stack([
+        np.full(count, x_offset),  # x coordinates (all x_offset)
+        y,                          # y coordinates
+        z + z_offset                # z coordinates with offset
+    ])
+
+    return keypoints
 
 def ik_track(model, data, site_name, target_pos,
              damping=1e-3, pos_gain=2.0, dt=0.1, max_iters=2000):
     """TODO:
     Implement an IK tracking function that computes the joint configuration to reach a target end-effector position. We ignore orientation tracking for simplicity.
-    The function should iteratively update the joint configuration using the Jacobian of the end-effector until it reaches the target within a specified tolerance 
-    or exceeds the maximum number of iterations. We use the Damped Least Squares method to handle singularities in the Jacobian. For interest, you can learn about 
+    The function should iteratively update the joint configuration using the Jacobian of the end-effector until it reaches the target within a specified tolerance
+    or exceeds the maximum number of iterations. We use the Damped Least Squares method to handle singularities in the Jacobian. For interest, you can learn about
     Damped Least Squares method on wikipedia: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
 
     Steps:
@@ -82,11 +97,12 @@ def ik_track(model, data, site_name, target_pos,
         mujoco.mj_comPos(model, data)
 
         # TODO: compute end-effector position error
-        err_pos = ...
+        err_pos = target_pos - model.site(site_name).xpos
 
         # TODO: check if the 2-norm of the position error is within a small threshold (1e-3), if yes, break the loop
-        ...
-        
+        if np.linalg.norm(err_pos) < 1e-3:
+            break
+
         # Get the Jacobian of the end-effector using mj_jacSite.
         jacp = np.zeros((3, num_joints)) # position Jacobian
         jacr = np.zeros((3, num_joints)) # orientation Jacobian
@@ -95,24 +111,15 @@ def ik_track(model, data, site_name, target_pos,
 
         # TODO: compute the change in joint configuration (qdot) using Damped Least Squares method to reduce the position error
         # Damped least squares: qdot = J^T @ (J @ J^T + damping * I)^-1 @ weighted_err
-        # Hint: damping * I is a 6x6 matrix with damping on the diagonal, and weighted error is a 6D vector (3 for pos, 3 for rot) of the form 
+        # Hint: damping * I is a 6x6 matrix with damping on the diagonal, and weighted error is a 6D vector (3 for pos, 3 for rot) of the form
         # [pos_gain * err_pos, rot_gain * err_rot]. Since we are ignoring orientation tracking, you can set the rotational part of the weighted error to zero.
-        # Instead of directly computing the matrix inverse (which can be numerically unstable), you should use np.linalg.solve to solve the 
+        # Instead of directly computing the matrix inverse (which can be numerically unstable), you should use np.linalg.solve to solve the
         # linear system (J @ J^T + damping * I) x = weighted_err for x, and then compute qdot = J^T @ x. This is more stable and efficient than computing the inverse.
-        qdot = ...
-
-        # optional clamp to avoid overshoot
-        qdot = np.clip(qdot, -2.0, 2.0)
-
-        # Update the joint configuration (qpos) using the output from the Damped Least Squares method
-        data.qvel[:] = 0.0
+        qdot = np.linalg.solve(
+            J @ J.T + damping * np.eye(num_joints),
+            np.concatenate([pos_gain * err_pos, np.zeros(num_joints)])
+            )
         data.qpos[:] += qdot * dt
-
-    # If exiting the loop without reaching the target, print a warning message
-    if i >= max_iters - 1 and np.linalg.norm(err_pos) >= 5e-3:
-        print("Warning: IK did not converge within the iteration limit.")
-        print(f"Final position error: {np.linalg.norm(err_pos):.4f}")
-
     # Restore the original joint configuration and return the target joint configuration
     target_qpos = data.qpos.copy()
     data.qpos[:] = original_qpos

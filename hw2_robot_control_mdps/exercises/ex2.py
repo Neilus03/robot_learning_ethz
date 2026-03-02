@@ -20,7 +20,7 @@ def generate_quintic_spline_waypoints(start, end, num_points):
         np.ndarray: Generated waypoints.
     """
     # Generate 'num_points' linearly spaced time steps between 0 and 1
-    s = np.linspace(0, 1, num_points, endpoint=False)
+    s = np.linspace(0, 1, num_points)
 
     # Apply the quintic time scaling polynomial function
     f_s = 10 * s**3 - 15 * s**4 + 6 * s**5

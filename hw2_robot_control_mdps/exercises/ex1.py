@@ -97,7 +97,7 @@ def ik_track(model, data, site_name, target_pos,
         mujoco.mj_comPos(model, data)
 
         # TODO: compute end-effector position error
-        err_pos = target_pos - model.site(site_name).xpos
+        err_pos = target_pos - data.site(site_name).xpos
 
         # TODO: check if the 2-norm of the position error is within a small threshold (1e-3), if yes, break the loop
         if np.linalg.norm(err_pos) < 1e-3:
@@ -115,10 +115,10 @@ def ik_track(model, data, site_name, target_pos,
         # [pos_gain * err_pos, rot_gain * err_rot]. Since we are ignoring orientation tracking, you can set the rotational part of the weighted error to zero.
         # Instead of directly computing the matrix inverse (which can be numerically unstable), you should use np.linalg.solve to solve the
         # linear system (J @ J^T + damping * I) x = weighted_err for x, and then compute qdot = J^T @ x. This is more stable and efficient than computing the inverse.
-        qdot = np.linalg.solve(
-            J @ J.T + damping * np.eye(num_joints),
-            np.concatenate([pos_gain * err_pos, np.zeros(num_joints)])
-            )
+        weighted_err = np.concatenate([pos_gain * err_pos, np.zeros(3)])
+        A = J @ J.T + damping * np.eye(6)
+        x = np.linalg.solve(A, weighted_err)
+        qdot = J.T @ x
         data.qpos[:] += qdot * dt
     # Restore the original joint configuration and return the target joint configuration
     target_qpos = data.qpos.copy()
@@ -126,3 +126,27 @@ def ik_track(model, data, site_name, target_pos,
     mujoco.mj_kinematics(model, data)
     mujoco.mj_forward(model, data)
     return target_qpos
+
+
+'''
+Theoretical questions:
+- If you increase the width of the Lemniscate (increasing a), what issue can happen with the robot performing IK?
+    The target trajectory becomes wider and taller, therefore,the robot doesn't arrive at the target position (unreachability) because the end-effector is too far away from the target position. Also some Kinematic Singularities can happen because the robot is too far away from the target position.
+
+- What can happen if you change the dt parameter in IK?
+    dt acts as the step size or learning rate for the iterative solver, so if it is too large, it overshoots the target position and doesn't converge to the target position, when i set it a very small value, it converges to the target position but it takes too long to converge.
+
+- We implemented a simple numerical IK solver. What are the advantages and disadvantages compared to an analytical IK solver?
+    Advantage: Numerical IK solvers are highly versatile and easily handle complex, redundant robots without requiring custom algebraic derivations for every specific robot model.
+    Disadvantage: They are computationally slower, prone to getting stuck in local minima, and only find one approximate solution rather than all exact configurations provided by analytical solvers.
+
+- What are the limits of our IK solver compared to state-of-the-art IK solvers?
+    This implementation ignores:
+        - orientation tracking: It doesn't take into account the orientation of the end-effector, therefore, it might be at the right position but the wrong orientation.
+        - joint limits: might output a joint angle of $400^\circ$ to reach a target, physically breaking the real robot
+        - collision avoidance: might output a joint angle that is in collision with the environment
+        - null space exploitation: only optimizes for end effector position, not for joint angles or other constraints
+        - etc.
+    Also it is susceptible to local minima and numerical instability.
+
+'''

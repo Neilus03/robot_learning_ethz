@@ -127,26 +127,22 @@ def ik_track(model, data, site_name, target_pos,
     mujoco.mj_forward(model, data)
     return target_qpos
 
-
-'''
-Theoretical questions:
-- If you increase the width of the Lemniscate (increasing a), what issue can happen with the robot performing IK?
-    The target trajectory becomes wider and taller, therefore,the robot doesn't arrive at the target position (unreachability) because the end-effector is too far away from the target position. Also some Kinematic Singularities can happen because the robot is too far away from the target position.
-
-- What can happen if you change the dt parameter in IK?
-    dt acts as the step size or learning rate for the iterative solver, so if it is too large, it overshoots the target position and doesn't converge to the target position, when i set it a very small value, it converges to the target position but it takes too long to converge.
-
-- We implemented a simple numerical IK solver. What are the advantages and disadvantages compared to an analytical IK solver?
-    Advantage: Numerical IK solvers are highly versatile and easily handle complex, redundant robots without requiring custom algebraic derivations for every specific robot model.
-    Disadvantage: They are computationally slower, prone to getting stuck in local minima, and only find one approximate solution rather than all exact configurations provided by analytical solvers.
-
-- What are the limits of our IK solver compared to state-of-the-art IK solvers?
-    This implementation ignores:
-        - orientation tracking: It doesn't take into account the orientation of the end-effector, therefore, it might be at the right position but the wrong orientation.
-        - joint limits: might output a joint angle of $400^\circ$ to reach a target, physically breaking the real robot
-        - collision avoidance: might output a joint angle that is in collision with the environment
-        - null space exploitation: only optimizes for end effector position, not for joint angles or other constraints
-        - etc.
-    Also it is susceptible to local minima and numerical instability.
-
-'''
+# Theoretical questions:
+# - If you increase the width of the Lemniscate (increasing a), what issue can happen with the robot performing IK?
+#     The target trajectory becomes wider and taller, therefore,the robot doesn't arrive at the target position (unreachability) because the end-effector is too far away from the target position. Also some Kinematic Singularities can happen because the robot is too far away from the target position.
+#
+# - What can happen if you change the dt parameter in IK?
+#     dt acts as the step size or learning rate for the iterative solver, so if it is too large, it overshoots the target position and doesn't converge to the target position, when i set it a very small value, it converges to the target position but it takes too long to converge.
+#
+# - We implemented a simple numerical IK solver. What are the advantages and disadvantages compared to an analytical IK solver?
+#     Advantage: Numerical IK solvers are highly versatile and easily handle complex, redundant robots without requiring custom algebraic derivations for every specific robot model.
+#     Disadvantage: They are computationally slower, prone to getting stuck in local minima, and only find one approximate solution rather than all exact configurations provided by analytical solvers.
+#
+# - What are the limits of our IK solver compared to state-of-the-art IK solvers?
+#     This implementation ignores:
+#         - orientation tracking: It doesn't take into account the orientation of the end-effector, therefore, it might be at the right position but the wrong orientation.
+#         - joint limits: might output a joint angle of $400^\circ$ to reach a target, physically breaking the real robot
+#         - collision avoidance: might output a joint angle that is in collision with the environment
+#         - null space exploitation: only optimizes for end effector position, not for joint angles or other constraints
+#         - etc.
+#     Also it is susceptible to local minima and numerical instability.

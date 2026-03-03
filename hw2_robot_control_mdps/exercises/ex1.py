@@ -41,7 +41,7 @@ def build_keypoints(count=16, width=0.25, x_offset=0.3, z_offset=0.25):
         np.ndarray: Array of shape (count, 3) containing the generated keypoints.
     """
     # Generate 'count' linearly spaced time values between 0 and 2π (exclusive)
-    t = np.linspace(0, 2 * np.pi, count, endpoint=True)
+    t = np.linspace(0, 2 * np.pi, count, endpoint=False)
 
     # Compute (y, z) coordinates using get_lemniscate_keypoint
     y, z = get_lemniscate_keypoint(t, a=width)

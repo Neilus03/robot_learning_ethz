@@ -119,6 +119,15 @@ def ik_track(model, data, site_name, target_pos,
         A = J @ J.T + damping * np.eye(6)
         x = np.linalg.solve(A, weighted_err)
         qdot = J.T @ x
+
+
+        # optional clamp to avoid overshoot
+        qdot = np.clip(qdot, -2.0, 2.0)
+
+        # Update the joint configuration (qpos) using the output from the Damped Least Squares method
+        data.qvel[:] = 0.0
+
+
         data.qpos[:] += qdot * dt
     # Restore the original joint configuration and return the target joint configuration
     target_qpos = data.qpos.copy()

@@ -59,5 +59,5 @@ def pid_control(tracking_error_history, timestep, Kp=150.0, Ki=0.0, Kd=0.01):
     if len(tracking_error_history) < 2:
         D = np.zeros_like(P)
     else:
-        D = (tracking_error_history[-1] - tracking_error_history[-2]) / timestep 
+        D = (tracking_error_history[-1] - tracking_error_history[-2]) / timestep
     return Kp * P + Ki * I + Kd * D

@@ -15,12 +15,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate PID on SO100 tracking")
     parser.add_argument("--load_run", type=str, default="1",
                         help="training id")
-    parser.add_argument("--checkpoint", type=str, default="500",
+    parser.add_argument("--checkpoint", type=str, default="200",
                         help="checkpoint id")
     parser.add_argument("--device", type=str, default="cpu",
                         help="Torch device (cpu or cuda)")
     return parser.parse_args()
-     
+
 def policy_callback(model, data):
     step_count = getattr(policy_callback, "step_count", 0)
     keypoint_id = getattr(policy_callback, "keypoint_id", 0)
@@ -34,7 +34,7 @@ def policy_callback(model, data):
 
     if step_count > play_episode_length * env.ctrl_decimation:
         step_count = 0
-    
+
     if step_count % env.ctrl_decimation == 0:
         obs = env._get_obs()
         action, _states = rl_model.predict(obs, deterministic=True)
@@ -46,8 +46,8 @@ def policy_callback(model, data):
 
 if __name__ == "__main__":
     args = parse_args()
-    policy_path = EXP_DIR / f"so100_tracking_{args.load_run}" / f"model_{args.checkpoint}.zip" 
-    
+    policy_path = EXP_DIR / f"so100_tracking_{args.load_run}" / f"model_{args.checkpoint}.zip"
+
     env = SO100TrackEnv(xml_path=XML_PATH, render_mode=None)
     play_episode_length_s = 5
     play_episode_length = int(play_episode_length_s / env.ctrl_timestep)

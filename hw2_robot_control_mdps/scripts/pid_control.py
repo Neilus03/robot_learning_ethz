@@ -12,7 +12,7 @@ from exercises.ex2 import generate_quintic_spline_waypoints, pid_control
 def update_tracking_error_history(tracking_error_history, target_qpos, max_length=10):
     current_qpos = data.qpos.copy()
     error = target_qpos - current_qpos
-    
+
     if len(tracking_error_history) == 0:
         tracking_error_history = error.reshape(1, -1)
     else:
@@ -20,17 +20,17 @@ def update_tracking_error_history(tracking_error_history, target_qpos, max_lengt
         if len(tracking_error_history) > max_length:
             tracking_error_history = tracking_error_history[1:]
     return tracking_error_history
-    
+
 def pid_callback(model, data):
     if len(tracking_error_history) == 0:
         data.ctrl[:] = 0
         return
     data.ctrl[:] = pid_control(tracking_error_history, model.opt.timestep)
 
-    
+
 if __name__ == "__main__":
     keypoints = build_keypoints()
-    
+
     model = mujoco.MjModel.from_xml_path(str(TORQUE_CTRL_XML_PATH))
     data = mujoco.MjData(model)
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     target_qpos = ik_track(model, data, site_name, total_waypoints[0])
     data.qpos[:] = target_qpos
     mujoco.mj_forward(model, data)
-    
+
     # pid
     tracking_error_history = np.array([])
 
@@ -64,10 +64,10 @@ if __name__ == "__main__":
             pid_callback.target_qpos = target_qpos
             data.mocap_pos[0] = total_waypoints[waypoint_id]
             tracking_error_history = update_tracking_error_history(tracking_error_history, target_qpos)
-            
+
             mujoco.mj_step(model, data)
             viewer.sync()
-            
+
             if np.linalg.norm(total_waypoints[waypoint_id] - data.site(site_name).xpos) < 3e-2:
                 tracking_error_history = np.array([])
                 waypoint_id = (waypoint_id + 1) % len(total_waypoints)

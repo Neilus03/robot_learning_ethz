@@ -41,9 +41,15 @@ def reset_target_position(base_pos: np.ndarray) -> None:
     Returns:
     - target_pos: np.ndarray. The 3D position of the target relative to the base. Dimensionality: 1D array, Shape: (3,).
     """
-    target_pos = np.array([np.random.uniform(0.2, 0.4), np.random.uniform(-0.2, 0.2), np.random.uniform(0.1, 0.4)])
-    return target_pos
+    # Sample random offsets from uniform distributions
+    x_offset = np.random.uniform(0.2, 0.4)
+    y_offset = np.random.uniform(-0.2, 0.2)
+    z_offset = np.random.uniform(0.1, 0.4)
 
+    # Compute target position relative to the base
+    target_pos = base_pos + np.array([x_offset, y_offset, z_offset])
+
+    return target_pos
 
 def process_action(action: np.ndarray, jnt_range: np.ndarray) -> np.ndarray:
     """

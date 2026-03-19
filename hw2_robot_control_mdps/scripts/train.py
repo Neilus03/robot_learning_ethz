@@ -41,8 +41,8 @@ if __name__ == "__main__":
             device=args.device,
             verbose=1,
             tensorboard_log=EXP_DIR,
-            gamma=0.99,
-            ent_coef=0.001,
+            gamma=0.995,
+            ent_coef=0.0001,
             vf_coef=1.0
         )
     else:

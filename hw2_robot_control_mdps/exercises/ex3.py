@@ -72,6 +72,7 @@ def process_action(action: np.ndarray, jnt_range: np.ndarray) -> np.ndarray:
     normalized_actions = (action + 1) / 2
     # Scale to joint range
     target_qpos = jnt_range[:, 0] + normalized_actions * (jnt_range[:, 1] - jnt_range[:, 0])
+    target_qpos = np.clip(target_qpos, jnt_range[:, 0], jnt_range[:, 1])
     return target_qpos
 
 

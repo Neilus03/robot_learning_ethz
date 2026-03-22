@@ -29,6 +29,13 @@ import argparse
 import sys
 from pathlib import Path
 
+_THIS_FILE = Path(__file__).resolve()
+_PROJECT_ROOT = _THIS_FILE.parents[1]  # hw3_imitation_learning/
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+
+
 _EX_INFO = {
     1: {"name": "Single-Cube Obstacle (train)", "default_ckpt": "ex1.pt"},
     2: {"name": "Single-Cube Obstacle (adversarial)", "default_ckpt": "ex2.pt"},

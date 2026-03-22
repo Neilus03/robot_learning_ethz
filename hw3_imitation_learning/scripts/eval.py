@@ -10,6 +10,14 @@ import argparse
 import time
 from pathlib import Path
 
+import sys
+
+
+_THIS_FILE = Path(__file__).resolve()
+_PROJECT_ROOT = _THIS_FILE.parents[1]  # hw3_imitation_learning/
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import cv2
 import numpy as np
 import torch

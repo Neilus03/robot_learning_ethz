@@ -14,6 +14,15 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import sys
+
+
+_THIS_FILE = Path(__file__).resolve()
+_PROJECT_ROOT = _THIS_FILE.parents[1]  # hw3_imitation_learning/
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+
 import torch
 import zarr as zarr_lib
 from hw3.dataset import (
@@ -24,13 +33,13 @@ from hw3.dataset import (
 )
 from hw3.model import BasePolicy, build_policy
 
-# TODO: Any imports you want from torch or other libraries we use. Not allowed: libraries we don't use
+# TODO: Any imports you want from torch or other libraries we use. Not allowed: libraries we don't use (DONE)
 from torch.utils.data import DataLoader, random_split
 
-# TODO: Choose your own hyperparameters!
-EPOCHS = ... 
-BATCH_SIZE = ...
-LR = ...
+# TODO: Choose your own hyperparameters! (DONE)
+EPOCHS = 200
+BATCH_SIZE = 256
+LR = 1e-3
 VAL_SPLIT = 0.1
 
 
@@ -46,8 +55,16 @@ def train_one_epoch(
 
     for batch in loader:
         states, action_chunks = batch
-        # TODO: Implement the training step for one batch here.
+        # TODO: Implement the training step for one batch here. (DONE)
         # This mostly: Get states and action_chunks onto the correct device, compute the loss, and step the optimizer.
+        states = states.to(device, dtype=torch.float32)
+        action_chunks = action_chunks.to(device, dtype=torch.float32)
+        optimizer.zero_grad()
+        loss = model.compute_loss(states, action_chunks)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+        n_batches += 1
 
     return total_loss / max(n_batches, 1)
 
@@ -64,13 +81,18 @@ def evaluate(
 
     for batch in loader:
         states, action_chunks = batch
-        # TODO: Implement the evaluation step for one batch here.
+        # TODO: Implement the evaluation step for one batch here. (DONE)
+        states = states.to(device, dtype=torch.float32)
+        action_chunks = action_chunks.to(device, dtype=torch.float32)
+        loss = model.compute_loss(states, action_chunks)
+        total_loss += loss.item()
+        n_batches += 1
 
     return total_loss / max(n_batches, 1)
 
 
 def main() -> None:
-    # TODO: You may add any cli arguments that make life easier for you like learning rate etc.
+    # TODO: You may add any cli arguments that make life easier for you like learning rate etc. (DONE)
     parser = argparse.ArgumentParser(description="Train action-chunking policy.")
     parser.add_argument(
         "--zarr", type=Path, required=True, help="Path to processed .zarr store."
@@ -104,6 +126,31 @@ def main() -> None:
         "If omitted, uses the action_key attribute from the zarr metadata.",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=LR,
+        help=f"Adam learning rate (default: {LR}).",
+    )
+    parser.add_argument(
+        "--extra-zarr",
+        nargs="*",
+        type=Path,
+        default=[],
+        help="Optional additional processed .zarr paths to merge with --zarr.",
+    )
+    parser.add_argument(
+        "--d-model",
+        type=int,
+        default=128,
+        help="Hidden width for the policy MLP (default: 128).",
+    )
+    parser.add_argument(
+        "--depth",
+        type=int,
+        default=2,
+        help="Number of hidden layers in the policy MLP (default: 2).",
+    )
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -159,15 +206,20 @@ def main() -> None:
         args.policy,
         state_dim=states.shape[1],
         action_dim=actions.shape[1],
-        # TODO: build with your desired specifications
+        chunk_size=args.chunk_size,
+        d_model=args.d_model,
+        depth=args.depth,
+        # TODO: build with your desired specifications (DONE)
     ).to(device)
 
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Model parameters: {n_params:,}")
 
-    # TODO: implement an optimizer and scheduler
-    # optimizer =
-    # scheduler =
+    # TODO: implement an optimizer and scheduler (DONE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=EPOCHS, eta_min=args.lr * 0.01
+    )
 
     # ── training loop ─────────────────────────────────────────────────
     best_val = float("inf")
@@ -222,6 +274,8 @@ def main() -> None:
                     "action_keys": args.action_keys,
                     "state_dim": int(states.shape[1]),
                     "action_dim": int(actions.shape[1]),
+                    "d_model": args.d_model,
+                    "depth": args.depth,
                     "val_loss": val_loss,
                 },
                 save_path,

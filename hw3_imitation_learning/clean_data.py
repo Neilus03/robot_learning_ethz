@@ -3,8 +3,8 @@ import numpy as np
 from pathlib import Path
 
 # 1. Configuration
-in_path = Path('datasets/processed/single_cube/processed_ee_xyz.zarr')
-out_path = Path('datasets/processed/single_cube/processed_ee_xyz_cleaned.zarr')
+in_path = Path('datasets/processed/single_cube/processed_ee_xyz_cleaned_dagger.zarr')
+out_path = Path('datasets/processed/single_cube/processed_ee_xyz_cleaned_dagger2.zarr')
 
 print(f"Loading dataset from {in_path}...")
 root = zarr.open_group(str(in_path), mode='r')

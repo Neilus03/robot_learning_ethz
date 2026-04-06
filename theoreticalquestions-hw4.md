@@ -138,3 +138,83 @@ Saved under `hw4_reinforcement_learning/logs/mdp/`.
 
 ![Value Iteration Policy slip=0.2](hw4_reinforcement_learning/logs/mdp/value_iteration_policy_slip_0.2.png)
 
+## Exercise 2: Deep Q-Network (DQN) on CartPole
+
+### Theoretical Questions
+
+#### 1) Why is experience replay important in DQN?
+
+Experience replay is important because it changes the learning updates from being driven by strongly correlated consecutive samples to being driven by approximately i.i.d. mini-batches sampled from a buffer:
+
+- **Correlation reduction**: sampling uniformly from the replay buffer reduces temporal correlation between updates, stabilizing training.
+- **Better data efficiency**: transitions can be reused for multiple gradient updates, improving sample efficiency.
+- **Smoother learning target distribution**: mixing older and newer transitions reduces non-stationarity seen by the optimizer.
+
+#### 2) What is the role of the target network in DQN? How does it improve stability?
+
+The target network provides a slowly changing bootstrap target for the TD update. Instead of using the online network to both select/evaluate the next-state value, the update uses:
+
+$$
+y = r + \gamma \max_{a'} Q_{\text{target}}(s', a') \cdot (1 - \text{done})
+$$
+
+Stability improvements:
+
+- **Reduces moving-target feedback**: the bootstrap target changes less frequently (here updated every `target_update` steps), preventing rapid oscillations/divergence.
+- **Decouples evaluation from rapidly-updated parameters**: the online network is trained toward a target that is not changing every gradient step.
+
+#### 3) What is Double DQN, and how does it reduce overestimation bias compared to standard DQN?
+
+Standard DQN uses the same network (the target network) to both select and evaluate the maximizing action, which introduces a positive bias under noise/estimation error:
+
+$$
+y_{\text{DQN}} = r + \gamma \max_{a'} Q_{\text{target}}(s', a')
+$$
+
+Double DQN reduces this by **decoupling action selection and action evaluation**:
+
+$$
+a^* = \arg\max_{a'} Q_{\text{online}}(s', a'), \quad
+y_{\text{DDQN}} = r + \gamma Q_{\text{target}}(s', a^*)
+$$
+
+This reduces overestimation because the maximization is performed on the online estimates, while the value is evaluated with the (more slowly changing) target network.
+
+### Results (Exercise 2)
+
+#### Training curve
+
+![DQN Training Curve](hw4_reinforcement_learning/logs/dqn/results/dqn_training_curve.png)
+
+#### Evaluation summary (50 episodes)
+
+The trained checkpoint at `hw4_reinforcement_learning/logs/dqn/models/dqn_cartpole.pth` was evaluated with `scripts/eval_dqn.py`.
+
+| metric | value |
+|---|---:|
+| Number of episodes | 50 |
+| Mean return | 500.00 |
+| Std return | 0.00 |
+| Min return | 500.00 |
+| Max return | 500.00 |
+| Median return | 500.00 |
+| Mean length | 500.00 |
+| Std length | 0.00 |
+| Success threshold | 475.0 |
+| Success rate | 100.0% |
+
+#### Optional: evaluation video
+
+An evaluation video was recorded to:
+- `hw4_reinforcement_learning/logs/dqn/videos/dqn_cartpole_eval-episode-0.mp4`
+
+### Deliverables (Exercise 2)
+
+#### Code
+- `hw4_reinforcement_learning/exercises/ex2_dqn.py`
+- `hw4_reinforcement_learning/exercises/ex2_dqn_config.py`
+
+#### Results
+- Training curve: `hw4_reinforcement_learning/logs/dqn/results/dqn_training_curve.png`
+- Evaluation summary: table above (from `scripts/eval_dqn.py`)
+

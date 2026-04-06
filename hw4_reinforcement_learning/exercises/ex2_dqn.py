@@ -37,8 +37,11 @@ class ReplayBuffer:
             next_state (np.ndarray): next state
             done (bool): whether the episode terminates after this transition
         """
-        # TODO: Append the transition to the replay buffer.                  
-        raise NotImplementedError
+        # TODO: Append the transition to the replay buffer.
+        # raise NotImplementedError
+
+        # Store as a simple tuple; sampling will stack into arrays later.
+        self.buffer.append((state, int(action), float(reward), next_state, bool(done)))
 
     def sample(self, batch_size):
         """
@@ -106,9 +109,14 @@ class QNet(torch.nn.Module):
         Returns:
             torch.Tensor: Q-values for all actions, shape (batch_size, action_dim)
         """
-        # TODO: Implement the forward pass of the network.         
-        # Use ReLU after the first linear layer.                   
-        raise NotImplementedError
+        # TODO: Implement the forward pass of the network.
+        # Use ReLU after the first linear layer.
+        # raise NotImplementedError
+
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        return x
 
 
 class DQN:
@@ -169,7 +177,18 @@ class DQN:
         # - For exploitation, convert the state to a torch tensor
         #   of shape (1, state_dim), move it to `self.device`,
         #   and choose the action with the largest Q-value.
-        raise NotImplementedError
+        # raise NotImplementedError
+
+        # Explore
+        if np.random.random() < self.epsilon:
+            return int(np.random.randint(self.action_dim))
+
+        # Exploit (greedy w.r.t. online network)
+        state_t = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            q_values = self.q_net(state_t)
+        action = int(q_values.argmax(dim=1).item())
+        return action
 
     def predict_action(self, state):
         """
@@ -224,7 +243,11 @@ class DQN:
             # Hint:
             # - Use the target network for next-state values.
             # - DQN target: r + gamma * max_a' Q_target(s', a') * (1 - done)
-            raise NotImplementedError
+            # raise NotImplementedError
+
+            next_q_values = self.target_q_net(next_states)  # (B, action_dim)
+            max_next_q_values = next_q_values.max(dim=1, keepdim=True).values  # (B, 1)
+            q_targets = rewards + self.gamma * max_next_q_values * (1.0 - dones)
 
         # Compute DQN loss
         dqn_loss = torch.mean(F.mse_loss(q_values, q_targets))

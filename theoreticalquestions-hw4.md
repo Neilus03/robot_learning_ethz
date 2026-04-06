@@ -15,21 +15,21 @@ This document contains concise responses to the HW4 theoretical questions, plus 
 #### 1) What is the difference between policy iteration and value iteration in terms of their update procedures?
 
 - **Policy Iteration** alternates between:
-  - **Policy evaluation**: repeatedly apply the Bellman *expectation* backup for a *fixed* policy \(\pi\) until \(V^\pi\) converges.
-  - **Policy improvement**: update \(\pi\) greedily w.r.t. the evaluated value function, i.e. \(\pi(s) \leftarrow \arg\max_a Q^\pi(s,a)\) (with tie-breaking).
+  - **Policy evaluation**: repeatedly apply the Bellman *expectation* backup for a *fixed* policy $\pi$ until $V^\pi$ converges.
+  - **Policy improvement**: update $\pi$ greedily w.r.t. the evaluated value function, i.e. $\pi(s) \leftarrow \arg\max_a Q^\pi(s,a)$ (with tie-breaking).
 - **Value Iteration** repeatedly applies the Bellman *optimality* backup directly:
-  - \(V(s) \leftarrow \max_a \sum_{s'} P(s'|s,a)\left[r(s,a,s')+\gamma V(s')\right]\),
-  and only extracts the greedy policy after \(V\) has converged.
+  - $V(s) \leftarrow \max_a \sum_{s'} P(s'|s,a)\left[r(s,a,s')+\gamma V(s')\right]$,
+  and only extracts the greedy policy after $V$ has converged.
 
 In short: **policy iteration = evaluate then improve**, **value iteration = improve the value directly via max backups**.
 
-#### 2) What happens if the discount factor \(\gamma\) is close to 0 or 1?
+#### 2) What happens if the discount factor $\gamma$ is close to 0 or 1?
 
-This question is addressed empirically by running the same solvers with \(\gamma\) close to 0 and close to 1 (using `slip_chance = 0.01`).
+This question is addressed empirically by running the same solvers with $\gamma$ close to 0 and close to 1 (using `slip_chance = 0.01`).
 
 Notes:
-- The assignment scripts use \(\gamma=0.9\), so that row is included for reference.
-- **\(\gamma=0.01\)** is used as “close to 0” and **\(\gamma=0.99\)** as “close to 1” (the exact endpoints 0 and 1 are edge cases).
+- The assignment scripts use $\gamma=0.9$, so that row is included for reference.
+- **$\gamma=0.01$** is used as “close to 0” and **$\gamma=0.99$** as “close to 1” (the exact endpoints 0 and 1 are edge cases).
 
 **Measured results (computed from the induced Markov chain using `env.P`):**
 
@@ -43,17 +43,17 @@ Notes:
 | 0.99 | ValueIteration | -14.504 | 15.17 | 0.996 | 0.004 | 2.077 |
 
 Observations (verifiable from the table):
-- As \(\gamma\) increases, **\(V(\text{start})\)** becomes **more negative** because future step costs \((-1)\) and failure risks are discounted less.
-- The **absorbing outcome probabilities** \(P(\text{reach goal})\) / \(P(\text{fall cliff})\) change only slightly between \(\gamma=0.9\) and \(\gamma=0.99\) here, suggesting the optimal policy is very similar in those two settings for this environment and slip.
-- With very small \(\gamma\) (\(0.01\)), the occupancy-weighted **expected steps** under the induced Markov chain becomes very large (268.56), which is consistent with the fact that discounting makes far-future costs almost irrelevant, so many behaviors have near-identical discounted value.
+- As $\gamma$ increases, **$V(\text{start})$** becomes **more negative** because future step costs $(-1)$ and failure risks are discounted less.
+- The **absorbing outcome probabilities** $P(\text{reach goal})$ / $P(\text{fall cliff})$ change only slightly between $\gamma=0.9$ and $\gamma=0.99$ here, suggesting the optimal policy is very similar in those two settings for this environment and slip.
+- With very small $\gamma$ ($0.01$), the occupancy-weighted **expected steps** under the induced Markov chain becomes very large (268.56), which is consistent with the fact that discounting makes far-future costs almost irrelevant, so many behaviors have near-identical discounted value.
 
 #### 3) How does increasing the slip probability (`slip_chance`) affect the optimal policy?
 
 The following are **measured, reproducible metrics** computed from the policies returned by `exercises/ex1_mdp.py`, using the tabular transition model `env.P`:
 
-- \(V(\text{start})\): discounted value at the start state (\(\gamma=0.9\))
-- \(E[\text{steps}]\): expected number of steps until termination (goal or cliff)
-- \(P(\text{reach goal})\), \(P(\text{fall cliff})\): absorption probabilities from the start state
+- $V(\text{start})$: discounted value at the start state ($\gamma=0.9$)
+- $E[\text{steps}]$: expected number of steps until termination (goal or cliff)
+- $P(\text{reach goal})$, $P(\text{fall cliff})$: absorption probabilities from the start state
 - avg distance-to-cliff: occupancy-weighted average Manhattan distance of visited states to the nearest cliff cell
 
 | slip_chance | algorithm | V(start) discounted | E[steps to terminate] | P(reach goal) | P(fall cliff) | avg distance-to-cliff (occupancy-weighted) |
@@ -73,7 +73,7 @@ Compare `slip_chance = 0.0, 0.01, 0.2` (what the table shows):
 
 Why conservative as stochasticity increases:
 
-- As `slip_chance` increases, being near the cliff causes a **measurable increase in \(P(\text{fall cliff})\)**. The optimal policy responds by shifting occupancy away from the cliff (**distance-to-cliff increases from 1.154 → 2.783**), which is directly visible in the policy plots and quantified above.
+- As `slip_chance` increases, being near the cliff causes a **measurable increase in $P(\text{fall cliff})$**. The optimal policy responds by shifting occupancy away from the cliff (**distance-to-cliff increases from 1.154 → 2.783**), which is directly visible in the policy plots and quantified above.
 
 ### Deliverables (Exercise 1)
 

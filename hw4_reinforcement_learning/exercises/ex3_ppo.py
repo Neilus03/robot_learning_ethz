@@ -90,12 +90,16 @@ class PPOAgent:
             # 3. compute the action log probability
             # 4. read the current policy mean and std
             # 5. compute the state value from the critic
-            action = ...
-            action_clipped = ...
-            action_log_prob = ...
-            action_mu = ...
-            action_std = ...
-            value = ...
+            action = self.actor.act(obs)
+            action_clipped = torch.clamp(action, -1.0, 1.0)
+
+            # The actor maintains an internal distribution after update_distribution().
+            # For act(), GaussianActor updates its distribution internally, so the
+            # log-prob and moments are available here.
+            action_log_prob = self.actor.get_actions_log_prob(action).detach()
+            action_mu = self.actor.action_mean.detach()
+            action_std = self.actor.action_std.detach()
+            value = float(self.critic(obs).item())
 
         return action, action_clipped, value, action_log_prob, action_mu, action_std
 
@@ -130,8 +134,14 @@ class PPOAgent:
         # Then:
         # - sum over action dimensions
         # - average over the mini-batch
-        kl_per_dim = ...
-        kl_per_sample = ...
+        # KL(N0 || N1) where:
+        #   N0 = N(old_mu, old_std^2),  N1 = N(mu, std^2)
+        kl_per_dim = (
+            torch.log(std_batch / old_std_batch)
+            + (old_std_batch**2 + (old_mu_batch - mu_batch) ** 2) / (2.0 * (std_batch**2))
+            - 0.5
+        )
+        kl_per_sample = kl_per_dim.sum(dim=-1)
     
         return kl_per_sample.mean()
         
@@ -166,9 +176,10 @@ class PPOAgent:
         # 2. clipped_ratio = clamp(ratio, 1 - clip_ratio, 1 + clip_ratio)
         # 3. objective = min(ratio * adv, clipped_ratio * adv)
         # 4. PPO minimizes loss, so use the negative mean objective
-        ratio = ...
-        clipped_ratio = ...
-        surrogate_loss = ...
+        ratio = torch.exp(logp_batch - old_logp_batch)
+        clipped_ratio = torch.clamp(ratio, 1.0 - self.clip_ratio, 1.0 + self.clip_ratio)
+        objective = torch.minimum(ratio * adv_batch, clipped_ratio * adv_batch)
+        surrogate_loss = -objective.mean()
         
         return self.surrogate_loss_coeff * surrogate_loss
 
@@ -185,10 +196,17 @@ class PPOAgent:
         # 3. Compute clipped loss
         # 4. Take max of clipped and unclipped loss
         # 5. Take mean and scale by value_loss_coeff
-        value_loss_unclipped = ...
-        value_clipped = ...
-        value_loss_clipped = ...
-        value_loss = ...
+        # Ensure shapes are (B,) for elementwise ops
+        val_batch = val_batch.view(-1)
+        old_val_batch = old_val_batch.view(-1)
+        ret_batch = ret_batch.view(-1)
+
+        value_loss_unclipped = (val_batch - ret_batch) ** 2
+        value_clipped = old_val_batch + torch.clamp(
+            val_batch - old_val_batch, -self.clip_ratio, self.clip_ratio
+        )
+        value_loss_clipped = (value_clipped - ret_batch) ** 2
+        value_loss = torch.maximum(value_loss_unclipped, value_loss_clipped).mean()
         
         return self.value_loss_coeff * value_loss
 
@@ -198,7 +216,7 @@ class PPOAgent:
         """
         # TODO: Implement PPO entropy loss.
         # Hint: PPO maximizes entropy
-        return ...
+        return -self.entropy_coeff * entropy_batch.mean()
 
     def mini_batch_generator(self, batch) -> Generator:
         """
@@ -265,21 +283,41 @@ class PPOAgent:
             # 5. compute entropy loss
             # 6. sum them into the final loss
             # 7. zero grad, backward, gradient clipping, optimizer step
-            kl = ...
-            self.learning_rate = ...
+            kl = self.compute_kl_mean(
+                old_mu_batch=old_mu_batch,
+                old_std_batch=old_std_batch,
+                mu_batch=mu_batch,
+                std_batch=std_batch,
+            )
+            self.learning_rate = self.adjust_learning_rate(
+                kl=float(kl.item()),
+                current_lr=self.learning_rate,
+            )
             for param_group in self.optimizer.param_groups:
                 param_group["lr"] = self.learning_rate
-            surrogate_loss = ...
-            value_loss = ...
-            entropy_loss = ...
-            loss = ...
+
+            # Normalize advantages (common PPO practice)
+            adv_norm = (adv_batch - adv_batch.mean()) / (adv_batch.std() + 1e-8)
+
+            surrogate_loss = self.compute_surrogate_loss(
+                logp_batch=logp_batch,
+                old_logp_batch=old_logp_batch,
+                adv_batch=adv_norm,
+            )
+            value_loss = self.compute_value_loss(
+                val_batch=val_batch,
+                old_val_batch=old_val_batch,
+                ret_batch=ret_batch,
+            )
+            entropy_loss = self.compute_entropy_loss(entropy_batch=entropy_batch)
+            loss = surrogate_loss + value_loss + entropy_loss
 
             self.optimizer.zero_grad()
             loss.backward()
             nn.utils.clip_grad_norm_(chain(self.actor.parameters(), self.critic.parameters()), self.max_grad_norm)
             self.optimizer.step()
 
-            mean_kl += kl
+            mean_kl += float(kl.item())
             mean_surrogate_loss += surrogate_loss.item()
             mean_value_loss += value_loss.item()
             mean_entropy += entropy_batch.mean().item()

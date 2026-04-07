@@ -86,57 +86,57 @@ Saved under `hw4_reinforcement_learning/logs/mdp/`.
 
 **slip = 0.0**
 
-![Policy Iteration Values slip=0.0](hw4_reinforcement_learning/logs/mdp/policy_iteration_values_slip_0.png)
+![Policy Iteration Values slip=0.0](logs/mdp/policy_iteration_values_slip_0.png)
 
 **slip = 0.01**
 
-![Policy Iteration Values slip=0.01](hw4_reinforcement_learning/logs/mdp/policy_iteration_values_slip_0.01.png)
+![Policy Iteration Values slip=0.01](logs/mdp/policy_iteration_values_slip_0.01.png)
 
 **slip = 0.2**
 
-![Policy Iteration Values slip=0.2](hw4_reinforcement_learning/logs/mdp/policy_iteration_values_slip_0.2.png)
+![Policy Iteration Values slip=0.2](logs/mdp/policy_iteration_values_slip_0.2.png)
 
 ##### Policy Iteration — Optimal Policy
 
 **slip = 0.0**
 
-![Policy Iteration Policy slip=0.0](hw4_reinforcement_learning/logs/mdp/policy_iteration_policy_slip_0.png)
+![Policy Iteration Policy slip=0.0](logs/mdp/policy_iteration_policy_slip_0.png)
 
 **slip = 0.01**
 
-![Policy Iteration Policy slip=0.01](hw4_reinforcement_learning/logs/mdp/policy_iteration_policy_slip_0.01.png)
+![Policy Iteration Policy slip=0.01](logs/mdp/policy_iteration_policy_slip_0.01.png)
 
 **slip = 0.2**
 
-![Policy Iteration Policy slip=0.2](hw4_reinforcement_learning/logs/mdp/policy_iteration_policy_slip_0.2.png)
+![Policy Iteration Policy slip=0.2](logs/mdp/policy_iteration_policy_slip_0.2.png)
 
 ##### Value Iteration — State Values
 
 **slip = 0.0**
 
-![Value Iteration Values slip=0.0](hw4_reinforcement_learning/logs/mdp/value_iteration_values_slip_0.png)
+![Value Iteration Values slip=0.0](logs/mdp/value_iteration_values_slip_0.png)
 
 **slip = 0.01**
 
-![Value Iteration Values slip=0.01](hw4_reinforcement_learning/logs/mdp/value_iteration_values_slip_0.01.png)
+![Value Iteration Values slip=0.01](logs/mdp/value_iteration_values_slip_0.01.png)
 
 **slip = 0.2**
 
-![Value Iteration Values slip=0.2](hw4_reinforcement_learning/logs/mdp/value_iteration_values_slip_0.2.png)
+![Value Iteration Values slip=0.2](logs/mdp/value_iteration_values_slip_0.2.png)
 
 ##### Value Iteration — Optimal Policy
 
 **slip = 0.0**
 
-![Value Iteration Policy slip=0.0](hw4_reinforcement_learning/logs/mdp/value_iteration_policy_slip_0.png)
+![Value Iteration Policy slip=0.0](logs/mdp/value_iteration_policy_slip_0.png)
 
 **slip = 0.01**
 
-![Value Iteration Policy slip=0.01](hw4_reinforcement_learning/logs/mdp/value_iteration_policy_slip_0.01.png)
+![Value Iteration Policy slip=0.01](logs/mdp/value_iteration_policy_slip_0.01.png)
 
 **slip = 0.2**
 
-![Value Iteration Policy slip=0.2](hw4_reinforcement_learning/logs/mdp/value_iteration_policy_slip_0.2.png)
+![Value Iteration Policy slip=0.2](logs/mdp/value_iteration_policy_slip_0.2.png)
 
 ## Exercise 2: Deep Q-Network (DQN) on CartPole
 
@@ -184,11 +184,11 @@ This reduces overestimation because the maximization is performed on the online 
 
 #### Training curve
 
-![DQN Training Curve](hw4_reinforcement_learning/logs/dqn/results/dqn_training_curve.png)
+![DQN Training Curve](logs/dqn/results/dqn_training_curve.png)
 
 #### Evaluation summary (50 episodes)
 
-The trained checkpoint at `hw4_reinforcement_learning/logs/dqn/models/dqn_cartpole.pth` was evaluated with `scripts/eval_dqn.py`.
+The trained checkpoint at `logs/dqn/models/dqn_cartpole.pth` was evaluated with `scripts/eval_dqn.py`.
 
 | metric | value |
 |---|---:|
@@ -206,16 +206,16 @@ The trained checkpoint at `hw4_reinforcement_learning/logs/dqn/models/dqn_cartpo
 #### Optional: evaluation video
 
 An evaluation video was recorded to:
-- `hw4_reinforcement_learning/logs/dqn/videos/dqn_cartpole_eval-episode-0.mp4`
+- `logs/dqn/videos/dqn_cartpole_eval-episode-0.mp4`
 
 ### Deliverables (Exercise 2)
 
 #### Code
-- `hw4_reinforcement_learning/exercises/ex2_dqn.py`
-- `hw4_reinforcement_learning/exercises/ex2_dqn_config.py`
+- `exercises/ex2_dqn.py`
+- `exercises/ex2_dqn_config.py`
 
 #### Results
-- Training curve: `hw4_reinforcement_learning/logs/dqn/results/dqn_training_curve.png`
+- Training curve: `logs/dqn/results/dqn_training_curve.png`
 - Evaluation summary: table above (from `scripts/eval_dqn.py`)
 
 ## Exercise 3: Proximal Policy Optimization (PPO) on SO100
@@ -297,10 +297,10 @@ All evaluations use `--num_eval_episodes 20` and report the summary printed by `
 ### Deliverables (Exercise 3)
 
 #### Code
-- `hw4_reinforcement_learning/exercises/ex3_ppo.py`
+- `exercises/ex3_ppo.py`
 
 #### Results
-- Tensorboard curves: `hw4_reinforcement_learning/logs/ppo/26_04_06_14_03_21_model/events.out.tfevents.1775477001.G.38052.0`
+- Tensorboard curves: `logs/ppo/26_04_06_14_03_21_model/events.out.tfevents.1775477001.G.38052.0`
 - Evaluation summary: table above (from `scripts/eval_ppo.py`)
 
 ## Exercise 4: Soft Actor-Critic (SAC) on SO100
@@ -355,18 +355,18 @@ UTD is the number of gradient updates per environment step.
 #### Training artifacts
 
 SAC training artifacts are saved under:
-- `hw4_reinforcement_learning/logs/sac/26_04_06_22_22_41_model/`
+- `logs/sac/26_04_06_22_22_41_model/`
 
 This run contains:
 - Tensorboard event file: `events.out.tfevents.1775506961.G.34416.0`
 - Checkpoints: `iter_39.pt`, `iter_80.pt`, `iter_121.pt`, ..., `iter_500.pt` (saved every 10 eval steps + final)
 
-Note: this run used a longer-run configuration in `hw4_reinforcement_learning/exercises/ex4_sac_config.py` (`total_iterations=500`, `save_interval=10`).
+Note: this run used a longer-run configuration in `exercises/ex4_sac_config.py` (`total_iterations=500`, `save_interval=10`).
 
 #### Evaluation summary (20 episodes)
 
 Checkpoint evaluated:
-- `hw4_reinforcement_learning/logs/sac/26_04_06_22_22_41_model/iter_500.pt`
+- `logs/sac/26_04_06_22_22_41_model/iter_500.pt`
 
 | metric | value |
 |---|---:|
@@ -386,10 +386,10 @@ Checkpoint evaluated:
 ### Deliverables (Exercise 4)
 
 #### Code
-- `hw4_reinforcement_learning/exercises/ex4_sac.py`
-- `hw4_reinforcement_learning/exercises/ex4_sac_config.py`
+- `exercises/ex4_sac.py`
+- `exercises/ex4_sac_config.py`
 
 #### Results
-- Tensorboard curves: `hw4_reinforcement_learning/logs/sac/26_04_06_22_22_41_model/events.out.tfevents.1775506961.G.34416.0`
+- Tensorboard curves: `logs/sac/26_04_06_22_22_41_model/events.out.tfevents.1775506961.G.34416.0`
 - Evaluation summary: table above (from `scripts/eval_sac.py`)
 

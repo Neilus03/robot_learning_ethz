@@ -133,7 +133,7 @@ class SACAgent:
             # Hint:
             # - self.actor.act(obs) returns (action, log_prob)
             # - Here you only need the sampled action
-            action = ...
+            action, _ = self.actor.act(obs)
 
         return action
 
@@ -172,13 +172,13 @@ class SACAgent:
             # 5. Build the Bellman target:
             #       rew + gamma * (1 - done) * q_next
             # 6. Compute the MSE losses against the target Q value for both Q-networks, average them to get critic_loss
-            next_action, next_logp = ...
-            q1_next, q2_next = ...
-            q_next = ...
-            target_q = ...
+            next_action, next_logp = self.actor.act(next_obs)
+            q1_next, q2_next = self.critic_target(next_obs, next_action)
+            q_next = torch.min(q1_next, q2_next) - self.alpha * next_logp
+            target_q = rew + self.gamma * (1.0 - done) * q_next
 
         q1_pred, q2_pred = self.critic(obs, act)
-        critic_loss = ...
+        critic_loss = 0.5 * (F.mse_loss(q1_pred, target_q) + F.mse_loss(q2_pred, target_q))
 
         return critic_loss
 
@@ -204,9 +204,9 @@ class SACAgent:
         # 2. Take the minimum Q-value
         # 3. Use the objective:
         #       mean(alpha * logp_new - q_new)
-        q1_new, q2_new = ...
-        q_new = ...
-        actor_loss = ...
+        q1_new, q2_new = self.critic(obs, act_new)
+        q_new = torch.min(q1_new, q2_new)
+        actor_loss = (self.alpha * logp_new - q_new).mean()
 
         return actor_loss
 
@@ -230,7 +230,7 @@ class SACAgent:
         # - Detach (logp_new + target_entropy) so alpha update does not backprop
         #   through the actor
         # - Take the mean over the batch
-        alpha_loss = ...
+        alpha_loss = -(self.log_alpha * (logp_new + self.target_entropy).detach()).mean()
 
         return alpha_loss
 
@@ -248,7 +248,8 @@ class SACAgent:
             for target_param, param in zip(
                 self.critic_target.parameters(), self.critic.parameters()
             ):
-                target_param.data.copy_( ... )
+                target_param.data.mul_(1.0 - self.tau)
+                target_param.data.add_(self.tau * param.data)
 
     def update(self, batch: ReplayBatch) -> SACUpdateStats:
         """
@@ -278,25 +279,25 @@ class SACAgent:
         # 3. Compute actor_loss and update actor parameters
         # 4. Compute alpha_loss and update log_alpha
         # 5. Soft-update the target critics
-        critic_loss = ...
+        critic_loss = self.compute_critic_loss(obs, act, rew, next_obs, done)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
 
-        act_new, logp_new = ...
+        act_new, logp_new = self.actor.act(obs)
 
-        actor_loss = ...
+        actor_loss = self.compute_actor_loss(obs, act_new, logp_new)
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        alpha_loss = ...
+        alpha_loss = self.compute_alpha_loss(logp_new)
         self.alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.alpha_optimizer.step()
 
         # TODO: Soft-update the target critics
-        ...
+        self.soft_update_targets()
 
         return SACUpdateStats(
             actor_loss=actor_loss.item(),

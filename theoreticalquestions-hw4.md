@@ -303,3 +303,93 @@ All evaluations use `--num_eval_episodes 20` and report the summary printed by `
 - Tensorboard curves: `hw4_reinforcement_learning/logs/ppo/26_04_06_14_03_21_model/events.out.tfevents.1775477001.G.38052.0`
 - Evaluation summary: table above (from `scripts/eval_ppo.py`)
 
+## Exercise 4: Soft Actor-Critic (SAC) on SO100
+
+### Theoretical Questions
+
+#### 1) SAC adds an entropy bonus to the reward. What are the benefits of this?
+
+SAC maximizes expected return while also encouraging high-entropy policies. The entropy term promotes:
+
+- **Exploration**: stochastic policies continue to explore, reducing premature convergence to suboptimal behaviors.
+- **Robustness**: higher-entropy solutions tend to be less brittle under modeling error and stochasticity.
+- **Stability**: the entropy-regularized objective can smooth optimization by discouraging extremely peaked action distributions early in training.
+
+#### 2) SAC squashes actions through $\tanh$. Why does this require a log-probability correction?
+
+SAC often samples $u \sim \mathcal{N}(\mu,\sigma^2)$ and then applies a squashing transform $a=\tanh(u)$ to enforce bounds (e.g. $a\in[-1,1]$).
+
+Because $\tanh$ is a nonlinear, non-volume-preserving transform, the probability density changes via the change-of-variables rule:
+
+$$
+\log \pi(a\mid s) = \log \pi(u\mid s) - \sum_i \log\left|\frac{d\,\tanh(u_i)}{d u_i}\right|
+$$
+
+Without this correction, the entropy term (and therefore both actor and temperature updates) would be computed with the wrong density.
+
+#### 3) The temperature $\alpha$ is tuned automatically. What happens when the policy's entropy is above vs. below the target?
+
+Automatic temperature tuning adjusts $\alpha$ to match a target entropy:
+
+- If the policy entropy is **below** target (too deterministic), the update increases $\alpha$, making the entropy term more important and encouraging more stochastic actions.
+- If the policy entropy is **above** target (too random), the update decreases $\alpha$, reducing the entropy incentive and allowing the policy to become more deterministic.
+
+#### 4) How does SAC compare with PPO in terms of update-to-data (UTD) ratio?
+
+UTD is the number of gradient updates per environment step.
+
+- **SAC (off-policy)** typically uses **higher UTD** because replay allows many gradient steps per collected transition.
+- **PPO (on-policy)** typically has **lower effective UTD** because it discards rollouts after each update to remain approximately on-policy.
+
+#### 5) Briefly discuss advantages and disadvantages of on-policy vs. off-policy algorithms.
+
+- **On-policy (e.g., PPO)**:
+  - **Pros**: stable learning in many continuous-control tasks; simpler distribution shift considerations.
+  - **Cons**: lower sample efficiency; data cannot be reused arbitrarily.
+- **Off-policy (e.g., SAC)**:
+  - **Pros**: high sample efficiency via replay; flexible UTD; can learn from diverse data.
+  - **Cons**: can be more sensitive to hyperparameters and implementation details; distribution shift must be managed carefully.
+
+### Results (Exercise 4)
+
+#### Training artifacts
+
+SAC training artifacts are saved under:
+- `hw4_reinforcement_learning/logs/sac/26_04_06_22_22_41_model/`
+
+This run contains:
+- Tensorboard event file: `events.out.tfevents.1775506961.G.34416.0`
+- Checkpoints: `iter_39.pt`, `iter_80.pt`, `iter_121.pt`, ..., `iter_500.pt` (saved every 10 eval steps + final)
+
+Note: this run used a longer-run configuration in `hw4_reinforcement_learning/exercises/ex4_sac_config.py` (`total_iterations=500`, `save_interval=10`).
+
+#### Evaluation summary (20 episodes)
+
+Checkpoint evaluated:
+- `hw4_reinforcement_learning/logs/sac/26_04_06_22_22_41_model/iter_500.pt`
+
+| metric | value |
+|---|---:|
+| Number of episodes | 20 |
+| Mean return | 29.819 |
+| Std return | 11.301 |
+| Min return | 9.375 |
+| Max return | 53.727 |
+| Median return | 29.873 |
+| Mean length | 30.00 |
+| Std length | 0.00 |
+| Mean tracking error | 0.051834 |
+| Std tracking error | 0.028515 |
+| Min tracking error | 0.008938 |
+| Max tracking error | 0.114133 |
+
+### Deliverables (Exercise 4)
+
+#### Code
+- `hw4_reinforcement_learning/exercises/ex4_sac.py`
+- `hw4_reinforcement_learning/exercises/ex4_sac_config.py`
+
+#### Results
+- Tensorboard curves: `hw4_reinforcement_learning/logs/sac/26_04_06_22_22_41_model/events.out.tfevents.1775506961.G.34416.0`
+- Evaluation summary: table above (from `scripts/eval_sac.py`)
+

@@ -4,3 +4,6 @@ hw3_imitation_learning/datasets/
 hw3_imitation_learning/
 hw2_robot_control_mdps/
 hw1_pytorch_tutorial/
+hw4_reinforcement_learning/.venv/
+hw4_reinforcement_learning/.notebook/
+hw4_reinforcement_learning/.mypy_cache/

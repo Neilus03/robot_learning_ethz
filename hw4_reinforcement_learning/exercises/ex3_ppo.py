@@ -101,7 +101,9 @@ class PPOAgent:
             action_std = self.actor.action_std.detach()
             value = float(self.critic(obs).item())
 
-        return action, action_clipped, value, action_log_prob, action_mu, action_std
+        action_log_prob_f = float(action_log_prob.item())
+
+        return action, action_clipped, value, action_log_prob_f, action_mu, action_std
 
     def predict_action(self, obs: torch.Tensor):
         """
@@ -142,9 +144,9 @@ class PPOAgent:
             - 0.5
         )
         kl_per_sample = kl_per_dim.sum(dim=-1)
-    
+
         return kl_per_sample.mean()
-        
+
 
     def adjust_learning_rate(self, kl, current_lr, min_lr=1e-5, max_lr=1e-3):
         """
@@ -176,11 +178,15 @@ class PPOAgent:
         # 2. clipped_ratio = clamp(ratio, 1 - clip_ratio, 1 + clip_ratio)
         # 3. objective = min(ratio * adv, clipped_ratio * adv)
         # 4. PPO minimizes loss, so use the negative mean objective
+        logp_batch = logp_batch.view(-1)
+        old_logp_batch = old_logp_batch.view(-1)
+        adv_batch = adv_batch.view(-1)
+
         ratio = torch.exp(logp_batch - old_logp_batch)
         clipped_ratio = torch.clamp(ratio, 1.0 - self.clip_ratio, 1.0 + self.clip_ratio)
         objective = torch.minimum(ratio * adv_batch, clipped_ratio * adv_batch)
         surrogate_loss = -objective.mean()
-        
+
         return self.surrogate_loss_coeff * surrogate_loss
 
     def compute_value_loss(self, val_batch, old_val_batch, ret_batch):
@@ -207,7 +213,7 @@ class PPOAgent:
         )
         value_loss_clipped = (value_clipped - ret_batch) ** 2
         value_loss = torch.maximum(value_loss_unclipped, value_loss_clipped).mean()
-        
+
         return self.value_loss_coeff * value_loss
 
     def compute_entropy_loss(self, entropy_batch):
@@ -288,21 +294,16 @@ class PPOAgent:
                 old_std_batch=old_std_batch,
                 mu_batch=mu_batch,
                 std_batch=std_batch,
-            )
-            self.learning_rate = self.adjust_learning_rate(
-                kl=float(kl.item()),
-                current_lr=self.learning_rate,
-            )
+            ).item()
+
+            self.learning_rate = self.adjust_learning_rate(kl, self.learning_rate)
             for param_group in self.optimizer.param_groups:
                 param_group["lr"] = self.learning_rate
-
-            # Normalize advantages (common PPO practice)
-            adv_norm = (adv_batch - adv_batch.mean()) / (adv_batch.std() + 1e-8)
 
             surrogate_loss = self.compute_surrogate_loss(
                 logp_batch=logp_batch,
                 old_logp_batch=old_logp_batch,
-                adv_batch=adv_norm,
+                adv_batch=adv_batch,
             )
             value_loss = self.compute_value_loss(
                 val_batch=val_batch,
@@ -317,7 +318,7 @@ class PPOAgent:
             nn.utils.clip_grad_norm_(chain(self.actor.parameters(), self.critic.parameters()), self.max_grad_norm)
             self.optimizer.step()
 
-            mean_kl += float(kl.item())
+            mean_kl += kl
             mean_surrogate_loss += surrogate_loss.item()
             mean_value_loss += value_loss.item()
             mean_entropy += entropy_batch.mean().item()

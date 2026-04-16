@@ -1,3 +1,6 @@
 hw3_imitation_learning/datasets/
 *.ubyte
 *.ubyte.gz
+hw3_imitation_learning/
+hw2_robot_control_mdps/
+hw1_pytorch_tutorial/
